@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AI学习规划助手</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC","Microsoft YaHei",sans-serif;-webkit-tap-highlight-color:transparent;}
+:root{--primary:#667eea;--primary-dark:#5a6fd6;--purple:#764ba2;--bg:#f5f5f7;--card:#fff;--text:#1d1d1f;--text2:#6e6e73;--text3:#aeaeb2;--border:#e5e5ea;--success:#34c759;--warning:#ff9500;--danger:#ff3b30;--radius:12px;--shadow:0 2px 16px rgba(0,0,0,0.06);}
+body{background:var(--bg);min-height:100vh;}
+#app{max-width:768px;margin:0 auto;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;position:relative;}
+.app-header{height:48px;background:var(--card);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border);flex-shrink:0;}
+.app-header span{font-size:15px;font-weight:600;color:var(--text);}
+.page-content{flex:1;overflow-y:auto;padding:16px 16px 80px;-webkit-overflow-scrolling:touch;}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,0.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;z-index:100;}
+@media(min-width:769px){.tab-bar{left:auto;right:auto;width:768px;}}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:var(--text3);transition:color 0.2s;border:none;background:none;font-size:10px;}
+.tab-item .tab-icon{font-size:22px;line-height:1;}
+.tab-item.active{color:var(--primary);}
+.tab-item.active .tab-icon{color:var(--primary);}
+
+/* 动画 */
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes countUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.anim>*{animation:slideUp 0.4s ease both;}
+.anim>*:nth-child(1){animation-delay:0.04s}
+.anim>*:nth-child(2){animation-delay:0.08s}
+.anim>*:nth-child(3){animation-delay:0.12s}
+.anim>*:nth-child(4){animation-delay:0.16s}
+.anim>*:nth-child(5){animation-delay:0.2s}
+.anim>*:nth-child(6){animation-delay:0.24s}
+.anim>*:nth-child(7){animation-delay:0.28s}
+.anim>*:nth-child(8){animation-delay:0.32s}
+.anim>*:nth-child(9){animation-delay:0.36s}
+.anim>*:nth-child(10){animation-delay:0.4s}
+.anim>*:nth-child(11){animation-delay:0.44s}
+.anim>*:nth-child(12){animation-delay:0.48s}
+.anim>*:nth-child(13){animation-delay:0.52s}
+.anim>*:nth-child(14){animation-delay:0.56s}
+.anim>*:nth-child(15){animation-delay:0.6s}
+
+/* 页面 */
+.page{display:none;}
+.page.active{display:block;}
+
+/* 登录 */
+.login-overlay{position:fixed;inset:0;z-index:200;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+.login-overlay.hidden{display:none;}
+.login-box{width:100%;background:rgba(255,255,255,0.96);border-radius:20px;padding:32px 28px;box-shadow:0 8px 32px rgba(0,0,0,0.15);}
+.login-box h2{text-align:center;font-size:22px;color:#5a4b8c;margin-bottom:4px;}
+.login-box .subtitle{text-align:center;font-size:13px;color:var(--text3);margin-bottom:24px;}
+.login-tabs{display:flex;margin-bottom:24px;border-bottom:2px solid var(--border);}
+.login-tabs div{flex:1;text-align:center;padding:10px 0;font-size:14px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.3s;}
+.login-tabs div.active{color:#5a4b8c;border-bottom-color:#764ba2;font-weight:600;}
+.login-form{display:none;}
+.login-form.active{display:block;}
+.login-form .field{margin-bottom:16px;}
+.login-form label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px;font-weight:500;}
+.login-form input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:8px;font-size:15px;transition:0.2s;}
+.login-form input:focus{border-color:var(--purple);outline:none;box-shadow:0 0 0 3px rgba(118,75,162,0.12);}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-weight:500;transition:opacity 0.2s;}
+.login-btn:hover{opacity:0.9;}
+.login-err{color:var(--danger);font-size:13px;text-align:center;margin-top:10px;display:none;}
+.login-ok{color:var(--success);font-size:13px;text-align:center;margin-top:10px;display:none;}
+
+/* 通用卡片 */
+.card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);}
+.card-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;}
+.card-text{font-size:13px;color:var(--text2);line-height:1.5;}
+.badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-primary{background:#eef0ff;color:var(--primary);}
+.badge-success{background:#e8f8ee;color:var(--success);}
+.badge-warning{background:#fff3e0;color:var(--warning);}
+.badge-danger{background:#ffe8e8;color:var(--danger);}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
+.btn-primary:hover{opacity:0.9;}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2);}
+.btn-outline:hover{background:#f5f5f5;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{opacity:0.9;}
+.flex{display:flex;align-items:center;}
+.flex-between{display:flex;justify-content:space-between;align-items:center;}
+.gap-8{gap:8px;}
+.gap-12{gap:12px;}
+.mt-12{margin-top:12px;}
+.mb-12{margin-bottom:12px;}
+.text-center{text-align:center;}
+.text-success{color:var(--success);}
+.text-warning{color:var(--warning);}
+
+/* 首页 */
+.welcome-card{background:linear-gradient(135deg,#667eea,#764ba2);border-radius:var(--radius);padding:24px;color:#fff;margin-bottom:16px;}
+.welcome-card h2{font-size:20px;font-weight:600;}
+.welcome-card p{font-size:13px;opacity:0.85;margin-top:4px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow);}
+.stat-card .num{font-size:26px;font-weight:700;color:var(--primary);}
+.stat-card .label{font-size:12px;color:var(--text2);margin-top:2px;}
+
+/* 打卡 */
+.checkin-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);text-align:center;margin-bottom:8px;}
+.daily-goal-card{background:var(--card);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:12px;}
+.daily-goal-header{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;}
+.daily-goal-bar{height:8px;background:#f0f0f5;border-radius:4px;overflow:hidden;}
+.daily-goal-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:4px;transition:width 0.5s ease;}
+.daily-goal-footer{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px;}
+.checkin-circle{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:#fff;font-size:28px;font-weight:700;transition:all 0.3s;}
+.checkin-circle.done{background:linear-gradient(135deg,#34c759,#30b350);}
+.checkin-btn{width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;transition:opacity 0.2s;}
+.checkin-btn.done{background:linear-gradient(135deg,#34c759,#30b350);}
+.checkin-btn:disabled{opacity:0.6;cursor:default;}
+.streak-info{display:flex;justify-content:space-around;margin-top:12px;}
+.streak-item{text-align:center;}
+.streak-item .num{font-size:22px;font-weight:700;color:var(--text);}
+.streak-item .label{font-size:12px;color:var(--text2);}
+.milestones{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+.milestone{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:2px solid var(--border);color:var(--text3);}
+.milestone.achieved{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+/* 对话 */
+.chat-box{height:380px;overflow-y:auto;padding:12px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;}
+.msg-row{display:flex;margin-bottom:10px;}
+.msg-row.user{justify-content:flex-end;}
+.msg-row.ai{justify-content:flex-start;}
+.msg-bubble{max-width:80%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.6;word-break:break-word;white-space:pre-wrap;}
+.msg-row.user .msg-bubble{background:var(--primary);color:#fff;border-bottom-right-radius:4px;}
+.msg-row.ai .msg-bubble{background:#f0f0f5;color:var(--text);border-bottom-left-radius:4px;}
+.chat-input-area{display:flex;gap:8px;}
+.chat-input-area textarea{flex:1;height:44px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;resize:none;transition:border-color 0.2s;}
+.chat-input-area textarea:focus{outline:none;border-color:var(--primary);}
+.send-btn{width:56px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-size:20px;cursor:pointer;flex-shrink:0;}
+
+/* 计划 */
+.plan-card{background:var(--card);border-radius:var(--radius);padding:20px 16px;box-shadow:var(--shadow);margin-bottom:12px;}
+.plan-title-display{text-align:center;font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;user-select:none;}
+.plan-title-display .arrow{font-size:12px;color:var(--text3);transition:transform 0.25s ease;display:inline-block;}
+.plan-title-display .arrow.collapsed{transform:rotate(-90deg);}
+.plan-content-wrap{overflow:hidden;transition:max-height 0.3s ease;max-height:2000px;}
+.plan-content-wrap.collapsed{max-height:0;margin:0;padding:0;}
+.plan-content-wrap.collapsed+.plan-actions{margin-top:0;}
+.plan-meta{text-align:center;font-size:11px;color:var(--text3);margin-bottom:8px;}
+.plan-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.plan-title{font-size:15px;font-weight:600;color:var(--text);flex:1;}
+.plan-status{font-size:11px;padding:2px 10px;border-radius:10px;font-weight:500;}
+.plan-status.active{background:#eef0ff;color:var(--primary);}
+.plan-status.done{background:#e8f8ee;color:var(--success);}
+.plan-status.archived{background:#f5f5f5;color:var(--text3);}
+.plan-desc{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.plan-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.plan-actions .btn{padding:5px 12px;font-size:11px;border-radius:6px;}
+.plan-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;}
+.plan-content-display{padding:10px 12px;background:#fafafc;border-radius:8px;font-size:13px;line-height:1.7;color:var(--text2);white-space:pre-wrap;word-break:break-word;border:1px solid var(--border);}
+
+/* 专注(番茄钟) */
+.focus-card{background:var(--card);border-radius:var(--radius);padding:32px 20px;box-shadow:var(--shadow);text-align:center;}
+.focus-timer{font-size:64px;font-weight:700;color:var(--text);letter-spacing:2px;margin-bottom:8px;font-variant-numeric:tabular-nums;}
+.focus-phase{font-size:14px;color:var(--text2);margin-bottom:20px;}
+.focus-phase .phase-badge{display:inline-block;padding:4px 16px;border-radius:12px;font-size:13px;}
+.focus-phase .phase-badge.focus{background:#eef0ff;color:var(--primary);}
+.focus-phase .phase-badge.break{background:#e8f8ee;color:var(--success);}
+.focus-controls{display:flex;gap:10px;justify-content:center;margin-bottom:16px;}
+.focus-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:24px;transition:all 0.2s;display:flex;align-items:center;justify-content:center;}
+.focus-btn.start{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
+.focus-btn.pause{background:#fff3e0;color:var(--warning);}
+.focus-btn.reset{background:#f5f5f5;color:var(--text2);}
+.focus-btn:active{transform:scale(0.92);}
+.focus-sessions{font-size:12px;color:var(--text3);}
+
+/* 统计 */
+.chart-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;}
+.chart-bar-area{display:flex;align-items:flex-end;gap:6px;height:120px;padding:0 4px;}
+.chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;}
+.chart-bar{width:100%;max-width:28px;border-radius:4px 4px 0 0;background:linear-gradient(to top,#667eea,#764ba2);min-height:4px;transition:height 0.6s ease;}
+.chart-bar-label{font-size:10px;color:var(--text3);margin-top:4px;}
+
+/* 个人中心 */
+.profile-header{text-align:center;padding:20px 0 16px;}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:32px;color:#fff;}
+.profile-name{font-size:18px;font-weight:600;color:var(--text);}
+.profile-extra{font-size:13px;color:var(--text2);margin-top:2px;}
+.settings-list{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.setting-item{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.2s;}
+.setting-item:last-child{border-bottom:none;}
+.setting-item:hover{background:#fafafa;}
+.setting-item .left{display:flex;align-items:center;gap:10px;}
+.setting-item .left span{font-size:14px;color:var(--text);}
+.setting-item .right{font-size:13px;color:var(--text3);display:flex;align-items:center;gap:4px;}
+.setting-item input[type="text"]{border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;width:140px;text-align:right;}
+.setting-item input[type="text"]:focus{outline:none;border-color:var(--primary);}
+.setting-item select{border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;color:var(--text);background:white;cursor:pointer;}
+
+/* Toast */
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);background:rgba(0,0,0,0.78);color:#fff;padding:16px 28px;border-radius:12px;font-size:14px;z-index:999;opacity:0;pointer-events:none;transition:all 0.25s;text-align:center;max-width:280px;}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+/* Empty state */
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty-state .icon{font-size:48px;margin-bottom:12px;}
+.empty-state p{font-size:14px;}
+
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- 顶部 -->
+  <div class="app-header"><span>📚 AI学习规划</span></div>
+
+  <!-- 页面容器 -->
+  <div class="page-content" id="pageContent">
+
+    <!-- ===== 首页 ===== -->
+    <div class="page active" id="pageHome">
+      <div class="welcome-card anim">
+        <div><h2 id="welcomeText">加载中...</h2></div>
+        <div><p>坚持学习，每天进步一点点</p></div>
+      </div>
+      <div class="stats-row anim">
+        <div class="stat-card"><div class="num" id="statStreak">0</div><div class="label">连续天数</div></div>
+        <div class="stat-card"><div class="num" id="statFocus">0</div><div class="label">专注时长(h)</div></div>
+        <div class="stat-card"><div class="num" id="statPlans">0</div><div class="label">完成计划</div></div>
+      </div>
+      <!-- 打卡 -->
+      <div class="checkin-card anim" id="checkinCard">
+        <div class="checkin-circle" id="checkinCircle">🔥</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;" id="checkinTitle">今日未打卡</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" id="checkinSub">每天坚持，养成学习习惯</div>
+        <button class="checkin-btn" id="checkinBtn" onclick="doCheckin()">📌 立即打卡</button>
+        <div class="streak-info">
+          <div class="streak-item"><div class="num" id="streakCurrent">0</div><div class="label">当前连续</div></div>
+          <div class="streak-item"><div class="num" id="streakMax">0</div><div class="label">最长连续</div></div>
+          <div class="streak-item"><div class="num" id="streakTotal">0</div><div class="label">总打卡数</div></div>
+        </div>
+        <div class="milestones" id="milestones"></div>
+      </div>
+      <!-- 每日目标进度 -->
+      <div class="daily-goal-card anim">
+        <div class="daily-goal-header"><span>🎯 今日学习进度</span><span id="goalLabel">目标 2h</span></div>
+        <div class="daily-goal-bar"><div class="daily-goal-fill" id="goalFill" style="width:0%"></div></div>
+        <div class="daily-goal-footer"><span id="goalDone">已学习 0 分钟</span><span id="goalRemain">剩余 2h</span></div>
+      </div>
+    </div>
+
+    <!-- ===== 对话 ===== -->
+    <div class="page" id="pageChat">
+      <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:12px;">💬 AI智能对话</div>
+      <div class="chat-box" id="chatBox">
+        <div class="msg-row ai">
+          <div class="msg-bubble">你好！我是你的学习规划助手。告诉我你的备考科目、薄弱点和学习时长，我帮你生成专属学习计划 📋</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea id="chatInput" placeholder="例如：我要备考四级，阅读和听力比较薄弱，每天有2小时学习时间" rows="1"></textarea>
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;" id="suggestTags">
+        <span class="badge badge-primary" style="cursor:pointer" onclick="quickTag('我要备考四级，阅读听力薄弱，每天2小时')">四级备考</span>
+        <span class="badge badge-primary" style="cursor:pointer" onclick="quickTag('准备考研数学，基础比较差，每天3小时')">考研数学</span>
+        <span class="badge badge-primary" style="cursor:pointer" onclick="quickTag('期末考试生物化学，知识点记不住，每天1.5小时')">期末生物</span>
+        <span class="badge badge-primary" style="cursor:pointer" onclick="quickTag('雅思备考，口语和写作薄弱，每天2小时')">雅思备考</span>
+      </div>
+    </div>
+
+    <!-- ===== 计划 ===== -->
+    <div class="page" id="pagePlans">
+      <div class="flex-between" style="margin-bottom:12px;">
+        <div style="font-size:16px;font-weight:600;color:var(--text);">📋 我的学习计划</div>
+        <button class="btn btn-sm btn-outline" onclick="renderPlans()">🔄</button>
+      </div>
+      <div id="planList"></div>
+    </div>
+
+    <!-- ===== 专注 ===== -->
+    <div class="page" id="pageFocus">
+      <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:12px;">⏱️ 专注模式</div>
+      <div class="focus-card anim">
+        <div class="focus-timer" id="focusTimer">25:00</div>
+        <div class="focus-phase"><span class="phase-badge focus" id="focusPhaseLabel">🍅 专注时间</span></div>
+        <div class="focus-controls">
+          <button class="focus-btn start" id="focusStartBtn" onclick="toggleFocus()">▶</button>
+          <button class="focus-btn reset" onclick="resetFocus()">↺</button>
+        </div>
+        <div class="focus-sessions" id="focusSessions">本日专注: 0 次 · 共 0 分钟</div>
+      </div>
+      <div class="card anim" style="margin-top:12px;">
+        <div class="card-title">💡 番茄工作法</div>
+        <div class="card-text">1. 选择一个任务专注学习 25 分钟<br>2. 休息 5 分钟，放松大脑<br>3. 每4个循环后休息 15 分钟<br>4. 重复循环，保持高效</div>
+      </div>
+    </div>
+
+    <!-- ===== 我的 ===== -->
+    <div class="page" id="pageProfile">
+      <div class="profile-header anim">
+        <div class="profile-avatar" id="profileAvatar">👤</div>
+        <div class="profile-name" id="profileName">用户</div>
+        <div class="profile-extra" id="profileExtra">今日已打卡 · 连续 0 天</div>
+      </div>
+
+      <!-- 编辑资料 -->
+      <div class="card anim" style="margin-bottom:12px;">
+        <div class="card-title">📝 编辑资料</div>
+        <div style="display:grid;gap:10px;">
+          <div>
+            <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">昵称</label>
+            <input type="text" id="editNick" placeholder="输入昵称" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">每日学习目标(小时)</label>
+            <input type="text" id="editDailyGoal" placeholder="例如: 2" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveProfile()">💾 保存</button>
+        </div>
+      </div>
+
+      <!-- 数据管理 -->
+      <div class="card anim">
+        <div class="card-title">⚙️ 数据管理</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="exportData()">📤 导出数据(JSON)</button>
+          <button class="btn btn-outline btn-sm" onclick="migrateOldData()">🔄 迁移旧数据</button>
+          <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑️ 清空所有数据</button>
+          <button class="btn btn-outline btn-sm" onclick="logout()">🚪 退出登录</button>
+        </div>
+      </div>
+
+      <!-- 统计概览 -->
+      <div class="card anim">
+        <div class="card-title">📊 本周专注统计</div>
+        <div class="chart-bar-area" id="weekChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <div class="tab-bar">
+    <button class="tab-item active" data-page="home" onclick="navigate('home')"><span class="tab-icon">🏠</span><span>首页</span></button>
+    <button class="tab-item" data-page="chat" onclick="navigate('chat')"><span class="tab-icon">💬</span><span>对话</span></button>
+    <button class="tab-item" data-page="plans" onclick="navigate('plans')"><span class="tab-icon">📋</span><span>计划</span></button>
+    <button class="tab-item" data-page="focus" onclick="navigate('focus')"><span class="tab-icon">⏱️</span><span>专注</span></button>
+    <button class="tab-item" data-page="profile" onclick="navigate('profile')"><span class="tab-icon">👤</span><span>我的</span></button>
+  </div>
+
+  <!-- 登录遮罩 -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box" style="animation:slideUp 0.4s ease;">
+      <h2>📚 AI学习规划</h2>
+      <p class="subtitle">制定专属学习计划，高效备考</p>
+      <div class="login-tabs">
+        <div class="active" onclick="switchLoginTab('in')">登录</div>
+        <div onclick="switchLoginTab('up')">注册</div>
+      </div>
+      <!-- 登录 -->
+      <div class="login-form active" id="loginFormIn">
+        <div class="field"><label>账号</label><input type="text" id="loginUser" placeholder="请输入账号" autocomplete="off"></div>
+        <div class="field"><label>密码</label><input type="password" id="loginPass" placeholder="请输入密码" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="login-btn" onclick="doLogin()">登 录</button>
+        <div class="login-err" id="loginErr"></div>
+      </div>
+      <!-- 注册 -->
+      <div class="login-form" id="loginFormUp">
+        <div class="field"><label>账号</label><input type="text" id="regUser" placeholder="设置登录账号" autocomplete="off"></div>
+        <div class="field"><label>密码</label><input type="password" id="regPass" placeholder="设置登录密码"></div>
+        <div class="field"><label>昵称（选填）</label><input type="text" id="regNick" placeholder="给自己取个名字吧"></div>
+        <button class="login-btn" onclick="doRegister()">注 册</button>
+        <div class="login-ok" id="regOk">注册成功，请切换到登录</div>
+        <div class="login-err" id="regErr"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ==================== 数据层 ====================
+const STORAGE_KEY = 'aiPlanApp_v2'
+
+function getData() {
+  let raw = localStorage.getItem(STORAGE_KEY)
+  if (!raw) return createDefaultData()
+  try { return JSON.parse(raw) } catch(e) { return createDefaultData() }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+}
+
+function createDefaultData() {
+  return {
+    users: {},
+    currentUser: '',
+    profiles: {}
+  }
+}
+
+function getCurrentUser() {
+  return getData().currentUser
+}
+
+function getUserProfile() {
+  let d = getData()
+  if (!d.currentUser || !d.profiles[d.currentUser]) return null
+  return d.profiles[d.currentUser]
+}
+
+function updateProfile(updates) {
+  let d = getData()
+  if (!d.currentUser) return
+  if (!d.profiles[d.currentUser]) d.profiles[d.currentUser] = createDefaultProfile()
+  Object.assign(d.profiles[d.currentUser], updates)
+  saveData(d)
+}
+
+function createDefaultProfile() {
+  return {
+    nickname: '',
+    dailyGoal: 2,
+    createdAt: new Date().toLocaleDateString(),
+    checkins: [],
+    maxStreak: 0,
+    focusSessions: [],
+    plans: [],
+    askHistory: '',
+    plansGenerated: 0
+  }
+}
+
+// ==================== Toast ====================
+let toastTimer = null
+function showToast(msg) {
+  let t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800)
+}
+
+// ==================== 登录系统 ====================
+function switchLoginTab(tab) {
+  document.querySelectorAll('.login-tabs div').forEach(el => el.classList.remove('active'))
+  document.querySelectorAll('.login-form').forEach(el => el.classList.remove('active'))
+  if (tab === 'in') {
+    document.querySelectorAll('.login-tabs div')[0].classList.add('active')
+    document.getElementById('loginFormIn').classList.add('active')
+  } else {
+    document.querySelectorAll('.login-tabs div')[1].classList.add('active')
+    document.getElementById('loginFormUp').classList.add('active')
+  }
+  document.querySelectorAll('.login-err,.login-ok').forEach(el => el.style.display = 'none')
+}
+
+function doLogin() {
+  let user = document.getElementById('loginUser').value.trim()
+  let pass = document.getElementById('loginPass').value.trim()
+  let err = document.getElementById('loginErr')
+  if (!user || !pass) { err.textContent = '请输入账号和密码'; err.style.display = 'block'; return }
+  let d = getData()
+  if (d.users[user] && d.users[user].password === pass) {
+    d.currentUser = user
+    saveData(d)
+    document.getElementById('loginOverlay').classList.add('hidden')
+    initApp()
+  } else {
+    err.textContent = '账号或密码错误'
+    err.style.display = 'block'
+  }
+}
+
+function doRegister() {
+  let user = document.getElementById('regUser').value.trim()
+  let pass = document.getElementById('regPass').value.trim()
+  let nick = document.getElementById('regNick').value.trim() || user
+  let err = document.getElementById('regErr')
+  let ok = document.getElementById('regOk')
+  err.style.display = 'none'; ok.style.display = 'none'
+  if (!user || !pass) { err.textContent = '账号和密码不能为空'; err.style.display = 'block'; return }
+  if (pass.length < 4) { err.textContent = '密码至少4位'; err.style.display = 'block'; return }
+  let d = getData()
+  if (d.users[user]) { err.textContent = '该账号已被注册'; err.style.display = 'block'; return }
+  d.users[user] = { password: pass, nickname: nick, createdAt: new Date().toLocaleDateString() }
+  if (!d.profiles[user]) d.profiles[user] = createDefaultProfile()
+  if (nick) d.profiles[user].nickname = nick
+  saveData(d)
+  ok.style.display = 'block'
+  document.getElementById('regUser').value = ''
+  document.getElementById('regPass').value = ''
+  document.getElementById('regNick').value = ''
+}
+
+function logout() {
+  let d = getData()
+  d.currentUser = ''
+  saveData(d)
+  document.getElementById('loginOverlay').classList.remove('hidden')
+}
+
+// ==================== 导航 ====================
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'))
+  document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'))
+  document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active')
+  document.querySelector(`.tab-item[data-page="${page}"]`).classList.add('active')
+  // 渲染
+  if (page === 'home') renderHome()
+  else if (page === 'plans') renderPlans()
+  else if (page === 'profile') renderProfile()
+  // 动画
+  let content = document.getElementById('pageContent')
+  let currentPage = document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1))
+  currentPage.querySelectorAll('.anim').forEach(el => {
+    el.style.animation = 'none'
+    void el.offsetHeight
+    el.style.animation = ''
+  })
+}
+
+// ==================== 首页 ====================
+function renderHome() {
+  let d = getData()
+  let p = getUserProfile()
+  if (!p) return
+  // 欢迎语
+  let h = new Date().getHours()
+  let welcome = '下午好，继续加油！'
+  if (h < 6) welcome = '🌙 这么晚还在学习，注意休息！'
+  else if (h < 12) welcome = '☀️ 早上好，开启一天的学习吧！'
+  else if (h < 18) welcome = '🌤️ 下午好，继续加油！'
+  else welcome = '🌙 晚上好，坚持学习就是胜利！'
+  document.getElementById('welcomeText').textContent = welcome
+  // 统计
+  let streak = calcStreak(p.checkins || [])
+  let focusMin = calcTotalFocus(p.focusSessions || [])
+  let donePlans = (p.plans || []).filter(pl => pl.status === 'done').length
+  document.getElementById('statStreak').textContent = streak.current
+  document.getElementById('statFocus').textContent = (focusMin / 60).toFixed(1)
+  document.getElementById('statPlans').textContent = donePlans
+  // 打卡
+  renderCheckin()
+  // 每日目标
+  let goal = p.dailyGoal || 2
+  let today = dateStr(new Date())
+  let todaySessions = (p.focusSessions || []).filter(s => s.startsWith(today))
+  let todayMin = todaySessions.length * 25
+  let goalMin = goal * 60
+  let pct = Math.min(100, Math.round(todayMin / goalMin * 100))
+  document.getElementById('goalLabel').textContent = '目标 ' + goal + 'h'
+  document.getElementById('goalFill').style.width = pct + '%'
+  document.getElementById('goalDone').textContent = '已学习 ' + todayMin + ' 分钟'
+  let remain = Math.max(0, goalMin - todayMin)
+  document.getElementById('goalRemain').textContent = '剩余 ' + (remain >= 60 ? (remain/60).toFixed(1) + 'h' : remain + ' 分钟')
+}
+
+function calcStreak(checkins) {
+  if (!checkins.length) return { current: 0, max: 0, total: 0 }
+  let sorted = [...checkins].sort().reverse()
+  let total = sorted.length
+  // 当前连续
+  let current = 0
+  let today = new Date()
+  let todayStr = dateStr(today)
+  let yesterdayStr = dateStr(new Date(today.getTime() - 86400000))
+  if (sorted[0] !== todayStr && sorted[0] !== yesterdayStr) {
+    current = 0
+  } else {
+    let checkDate = sorted[0] === todayStr ? today : new Date(today.getTime() - 86400000)
+    for (let i = 0; i < sorted.length; i++) {
+      let expected = dateStr(new Date(checkDate.getTime() - i * 86400000))
+      if (sorted.includes(expected)) current++
+      else break
+    }
+  }
+  // 最长连续
+  let max = 0
+  let run = 1
+  let days = [...checkins].sort()
+  for (let i = 1; i < days.length; i++) {
+    let prev = new Date(days[i-1])
+    let curr = new Date(days[i])
+    let diff = (curr - prev) / 86400000
+    if (diff === 1) { run++; max = Math.max(max, run) }
+    else run = 1
+  }
+  max = Math.max(max, run)
+  return { current, max, total }
+}
+
+function dateStr(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') }
+
+function renderCheckin() {
+  let p = getUserProfile()
+  if (!p) return
+  let checkins = p.checkins || []
+  let today = dateStr(new Date())
+  let done = checkins.includes(today)
+  let streak = calcStreak(checkins)
+  let circle = document.getElementById('checkinCircle')
+  circle.textContent = done ? '✅' : '🔥'
+  circle.className = 'checkin-circle' + (done ? ' done' : '')
+  document.getElementById('checkinTitle').textContent = done ? '今日已打卡 ✅' : '今日未打卡'
+  document.getElementById('checkinSub').textContent = done ? '太棒了，继续保持！' : '每天坚持，养成学习习惯'
+  let btn = document.getElementById('checkinBtn')
+  btn.textContent = done ? '✅ 已打卡' : '📌 立即打卡'
+  btn.className = 'checkin-btn' + (done ? ' done' : '')
+  btn.disabled = done
+  document.getElementById('streakCurrent').textContent = streak.current
+  document.getElementById('streakMax').textContent = streak.max
+  document.getElementById('streakTotal').textContent = streak.total
+  // 里程碑
+  let milestones = document.getElementById('milestones')
+  let targets = [7, 15, 30, 60, 100]
+  milestones.innerHTML = targets.map(t => {
+    let done = streak.max >= t
+    return `<div class="milestone ${done?'achieved':''}">${done?'✓':t}</div>`
+  }).join('')
+}
+
+function doCheckin() {
+  let p = getUserProfile()
+  if (!p) return
+  let today = dateStr(new Date())
+  if ((p.checkins || []).includes(today)) { showToast('今日已打卡'); return }
+  let checkins = p.checkins || []
+  checkins.push(today)
+  updateProfile({ checkins })
+  showToast('打卡成功！🔥')
+  renderCheckin()
+  renderHome()
+}
+
+// ==================== 对话 ====================
+const API_KEY = "ark-bdd3985e-3418-489e-9116-9dd6e4e7b9f4-9e6ff"
+const API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+
+async function sendMessage() {
+  let input = document.getElementById('chatInput').value.trim()
+  if (!input) return
+  let box = document.getElementById('chatBox')
+  box.innerHTML += `<div class="msg-row user"><div class="msg-bubble">${escapeHtml(input)}</div></div>`
+  document.getElementById('chatInput').value = ''
+  box.scrollTop = box.scrollHeight
+  box.innerHTML += `<div class="msg-row ai"><div class="msg-bubble" id="thinkingMsg">⏳ AI思考中...</div></div>`
+  box.scrollTop = box.scrollHeight
+  try {
+    let res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + API_KEY },
+      body: JSON.stringify({
+        model: "ep-20260511204110-nvv5q",
+        messages: [
+          { role: "system", content: "你是专业学习规划助手。请根据用户的学习目标、薄弱点和可用时间，生成一份详细、可执行的学习计划。包含：每日任务安排、具体学习方法、推荐学习资料、阶段性目标。回答要结构清晰、具体实用。" },
+          { role: "user", content: input }
+        ]
+      })
+    })
+    let result = await res.json()
+    let answer = result.choices[0].message.content
+    let el = document.getElementById('thinkingMsg')
+    if (el) {
+      el.textContent = answer
+      el.parentElement.innerHTML += `<div style="margin-top:6px"><button class="btn btn-sm btn-primary" onclick="savePlanFromChat(this)">📥 保存为学习计划</button></div>`
+    }
+    // 保存历史
+    let p = getUserProfile()
+    if (p) {
+      let old = p.askHistory || ''
+      p.askHistory = old ? old + '；' + input : input
+      p.plansGenerated = (p.plansGenerated || 0) + 1
+      // 解析并保存目标/弱点
+      let parsed = parseInput(input)
+      if (parsed.target && !p.target) p.target = parsed.target
+      if (parsed.weakPoints.length) p.weakPoints = [...new Set([...(p.weakPoints||[]), ...parsed.weakPoints])]
+      updateProfile(p)
+    }
+  } catch(e) {
+    let el = document.getElementById('thinkingMsg')
+    if (el) el.textContent = '❌ 接口连接失败，请检查网络或API密钥配置'
+  }
+  box.scrollTop = box.scrollHeight
+}
+
+function savePlanFromChat(btn) {
+  let bubble = btn.closest('.msg-row').querySelector('.msg-bubble')
+  if (!bubble) return
+  let content = bubble.textContent
+  if (content.startsWith('⏳')) return
+  let isUser = btn.closest('.msg-row').classList.contains('user')
+  if (isUser) return
+  let p = getUserProfile()
+  if (!p) return
+  let plans = p.plans || []
+  let title = extractTitle(content, plans.length)
+  plans.unshift({
+    id: Date.now(),
+    title: title,
+    content: content,
+    status: 'active',
+    createdAt: new Date().toLocaleString()
+  })
+  updateProfile({ plans })
+  showToast('已保存到学习计划 📋')
+  btn.textContent = '✅ 已保存'
+  btn.disabled = true
+}
+
+function extractTitle(content, count) {
+  let firstLine = content.split('\n')[0].trim()
+  if (firstLine.length > 4 && firstLine.length < 30) return firstLine.replace(/^[*#\s]+/, '').trim()
+  return '学习计划 #' + (count + 1)
+}
+
+function cleanContent(text) {
+  return text
+    .split('\n').map(line => {
+      let l = line
+      // 去掉行首 markdown 标题符号
+      l = l.replace(/^#{1,6}\s+/, '')
+      l = l.replace(/^\*{1,2}\s*/, '')
+      // 去掉行内加粗/斜体/代码标记
+      l = l.replace(/\*\*(.+?)\*\*/g, '$1')
+      l = l.replace(/\*(.+?)\*/g, '$1')
+      l = l.replace(/`(.+?)`/g, '$1')
+      // 去掉纯装饰行（多个连续的 = - 等）
+      if (/^[─━═=－\-]{3,}$/.test(l)) return ''
+      // 去掉开头多余空格
+      l = l.trimEnd()
+      return l
+    })
+    .filter(l => l !== '')
+    .join('\n')
+}
+
+function quickTag(text) {
+  document.getElementById('chatInput').value = text
+  sendMessage()
+}
+
+function parseInput(text) {
+  let data = { target: '', weakPoints: [], losePoints: [] }
+  const targets = [
+    ['四级','英语四级备考'],['六级','英语六级备考'],['考研','研究生考试备考'],
+    ['雅思','雅思考试备考'],['托福','托福考试备考'],['计算机二级','计算机二级备考'],
+    ['计算机三级','计算机三级备考'],['期末','期末考试备考'],['中考','中考备考'],
+    ['高考','高考备考'],['公务员','公务员考试备考'],['教资','教师资格证备考'],
+    ['会计','会计资格证备考'],['语文','语文专项提升'],['数学','数学专项提升'],
+    ['英语','英语专项提升'],['生物','生物基础巩固'],['化学','化学基础巩固'],['物理','物理基础巩固']
+  ]
+  targets.forEach(([kw,name]) => { if (text.includes(kw) && !data.target) data.target = name })
+  const weakMap = [
+    ['基础差','基础薄弱'],['基础弱','基础薄弱'],['生物','生物知识点薄弱'],
+    ['化学','化学知识点薄弱'],['物理','物理知识点薄弱'],['阅读','阅读理解薄弱'],
+    ['作文','写作能力薄弱'],['听力','听力部分薄弱'],['口语','口语表达薄弱'],
+    ['翻译','翻译能力薄弱'],['单词','词汇量不足'],['语法','语法基础薄弱'],
+    ['函数','数学函数薄弱'],['几何','几何部分薄弱'],['计算','计算能力薄弱'],
+    ['选择题','选择题容易丢分'],['大题','大题解题思路薄弱'],['填空','填空题准确率低'],
+    ['文言文','文言文阅读理解薄弱'],['古诗','古诗词背诵薄弱']
+  ]
+  weakMap.forEach(([kw,name]) => { if (text.includes(kw) && !data.weakPoints.includes(name)) data.weakPoints.push(name) })
+  return data
+}
+
+function escapeHtml(text) {
+  let d = document.createElement('div')
+  d.textContent = text
+  return d.innerHTML
+}
+
+// ==================== 计划管理 ====================
+let collapseState = {}
+function toggleCollapse(id) { collapseState[id] = !collapseState[id]; renderPlans() }
+
+function renderPlans() {
+  let list = document.getElementById('planList')
+  let p = getUserProfile()
+  if (!p || !p.plans || !p.plans.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>还没有学习计划<br>去AI对话生成一份吧！</p></div>'
+    return
+  }
+  list.innerHTML = p.plans.map((pl, i) => {
+    let statusClass = pl.status === 'done' ? 'done' : pl.status === 'archived' ? 'archived' : 'active'
+    let statusText = pl.status === 'done' ? '已完成' : pl.status === 'archived' ? '已归档' : '进行中'
+    let collapsed = collapseState[pl.id] || false
+
+    return `<div class="plan-card anim">
+      <div class="plan-title-display" onclick="toggleCollapse(${pl.id})">
+        <span class="arrow ${collapsed?'collapsed':''}">▼</span>
+        ${escapeHtml(pl.title)}
+      </div>
+      <div class="plan-meta">${pl.createdAt} · <span class="plan-status ${statusClass}">${statusText}</span></div>
+      <div class="plan-content-wrap ${collapsed?'collapsed':''}">
+        <div class="plan-content-display">${escapeHtml(cleanContent(pl.content || '(无内容)'))}</div>
+      </div>
+      <div class="plan-actions" style="margin-top:6px;">
+        ${pl.status === 'active' ? `<button class="btn btn-sm btn-outline" onclick="updatePlanStatus(${i},'archived')">📦 归档</button>` : ''}
+        ${pl.status !== 'active' ? `<button class="btn btn-sm btn-outline" onclick="updatePlanStatus(${i},'active')">↩ 恢复</button>` : ''}
+        <button class="btn btn-sm btn-outline" onclick="deletePlan(${i})">🗑 删除</button>
+      </div>
+    </div>`
+  }).join('')
+}
+
+function updatePlanStatus(idx, status) {
+  let p = getUserProfile()
+  if (!p || !p.plans) return
+  p.plans[idx].status = status
+  updateProfile({ plans: p.plans })
+  renderPlans()
+  showToast(status === 'archived' ? '已归档' : '已恢复')
+}
+
+function deletePlan(idx) {
+  let p = getUserProfile()
+  if (!p || !p.plans) return
+  p.plans.splice(idx, 1)
+  updateProfile({ plans: p.plans })
+  renderPlans()
+  showToast('已删除')
+}
+
+// ==================== 专注(番茄钟) ====================
+let focusState = { running: false, phase: 'focus', timeLeft: 1500, total: 1500, interval: null, sessionCount: 0 }
+
+function initFocus() {
+  let p = getUserProfile()
+  if (p) {
+    let today = dateStr(new Date())
+    focusState.sessionCount = (p.focusSessions || []).filter(s => s.startsWith(today)).length
+  }
+  updateFocusDisplay()
+}
+
+function toggleFocus() {
+  if (focusState.running) {
+    clearInterval(focusState.interval)
+    focusState.running = false
+    document.getElementById('focusStartBtn').textContent = '▶'
+    document.getElementById('focusStartBtn').className = 'focus-btn start'
+    return
+  }
+  focusState.running = true
+  document.getElementById('focusStartBtn').textContent = '⏸'
+  document.getElementById('focusStartBtn').className = 'focus-btn pause'
+  focusState.interval = setInterval(() => {
+    focusState.timeLeft--
+    updateFocusDisplay()
+    if (focusState.timeLeft <= 0) {
+      clearInterval(focusState.interval)
+      focusState.running = false
+      if (focusState.phase === 'focus') {
+        // 记录专注
+        let p = getUserProfile()
+        if (p) {
+          let sessions = p.focusSessions || []
+          sessions.push(dateStr(new Date()) + ':' + new Date().toLocaleTimeString())
+          updateProfile({ focusSessions: sessions })
+        }
+        focusState.sessionCount++
+        showToast('🍅 专注完成！休息一下吧')
+        focusState.phase = 'break'
+        focusState.timeLeft = 300
+        focusState.total = 300
+      } else {
+        showToast('☕ 休息结束，开始新的专注！')
+        focusState.phase = 'focus'
+        focusState.timeLeft = 1500
+        focusState.total = 1500
+      }
+      document.getElementById('focusStartBtn').textContent = '▶'
+      document.getElementById('focusStartBtn').className = 'focus-btn start'
+      updateFocusDisplay()
+    }
+  }, 1000)
+}
+
+function resetFocus() {
+  clearInterval(focusState.interval)
+  focusState.running = false
+  focusState.phase = 'focus'
+  focusState.timeLeft = 1500
+  focusState.total = 1500
+  document.getElementById('focusStartBtn').textContent = '▶'
+  document.getElementById('focusStartBtn').className = 'focus-btn start'
+  updateFocusDisplay()
+}
+
+function updateFocusDisplay() {
+  let m = Math.floor(focusState.timeLeft / 60)
+  let s = focusState.timeLeft % 60
+  document.getElementById('focusTimer').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0')
+  let phaseEl = document.getElementById('focusPhaseLabel')
+  if (focusState.phase === 'focus') {
+    phaseEl.textContent = '🍅 专注时间'
+    phaseEl.className = 'phase-badge focus'
+  } else {
+    phaseEl.textContent = '☕ 休息时间'
+    phaseEl.className = 'phase-badge break'
+  }
+  let today = dateStr(new Date())
+  let p = getUserProfile()
+  let sessions = (p && p.focusSessions || []).filter(s => s.startsWith(today)).length
+  let totalMin = (p && p.focusSessions || []).length * 25
+  document.getElementById('focusSessions').textContent = `本日专注: ${sessions} 次 · 共 ${totalMin} 分钟`
+}
+
+function calcTotalFocus(sessions) { return sessions.length * 25 }
+
+// ==================== 个人中心 ====================
+function renderProfile() {
+  let p = getUserProfile()
+  if (!p) return
+  document.getElementById('profileName').textContent = p.nickname || getCurrentUser()
+  document.getElementById('editNick').value = p.nickname || ''
+  document.getElementById('editDailyGoal').value = p.dailyGoal || 2
+  let checkins = p.checkins || []
+  let streak = calcStreak(checkins)
+  let today = dateStr(new Date())
+  let done = checkins.includes(today)
+  document.getElementById('profileExtra').textContent = (done ? '今日已打卡' : '今日未打卡') + ' · 连续 ' + streak.current + ' 天'
+  renderWeekChart()
+}
+
+function renderWeekChart() {
+  let chart = document.getElementById('weekChart')
+  let days = []
+  let now = new Date()
+  for (let i = 6; i >= 0; i--) {
+    let d = new Date(now.getTime() - i * 86400000)
+    days.push(dateStr(d))
+  }
+  let p = getUserProfile()
+  let sessions = p ? p.focusSessions || [] : []
+  let counts = days.map(d => sessions.filter(s => s.startsWith(d)).length)
+  let max = Math.max(...counts, 1)
+  let labels = ['一','二','三','四','五','六','日']
+  let todayIdx = new Date().getDay()
+  let weekLabels = []
+  for (let i = 0; i < 7; i++) {
+    let idx = ((todayIdx - 6 + i) % 7 + 7) % 7
+    weekLabels.push(labels[idx])
+  }
+  chart.innerHTML = counts.map((c, i) => {
+    let h = Math.max(4, (c / max) * 100)
+    return `<div class="chart-bar-wrap"><div class="chart-bar" style="height:${h}px"></div><div class="chart-bar-label">${c>0?c:''}</div><div class="chart-bar-label">${weekLabels[i]}</div></div>`
+  }).join('')
+}
+
+function saveProfile() {
+  let nick = document.getElementById('editNick').value.trim()
+  let goal = parseFloat(document.getElementById('editDailyGoal').value.trim()) || 2
+  updateProfile({ nickname: nick, dailyGoal: goal })
+  renderProfile()
+  showToast('已保存 ✅')
+}
+
+function exportData() {
+  let d = getData()
+  let user = d.currentUser || '未登录'
+  let p = d.profiles[user]
+  let lines = []
+  let sep = '='.repeat(50)
+  let sep2 = '-'.repeat(40)
+
+  lines.push(sep)
+  lines.push('  AI 学习规划助手 - 数据报告')
+  lines.push('  导出时间: ' + new Date().toLocaleString())
+  lines.push(sep)
+  lines.push('')
+
+  // 用户信息
+  lines.push('【用户信息】')
+  lines.push('  账号: ' + user)
+  if (p && p.nickname) lines.push('  昵称: ' + p.nickname)
+  if (p && p.dailyGoal) lines.push('  每日目标: ' + p.dailyGoal + ' 小时')
+  if (p && p.createdAt) lines.push('  注册时间: ' + p.createdAt)
+  lines.push('')
+
+  if (p) {
+    // 学习统计
+    lines.push('【学习统计】')
+    let checkins = p.checkins || []
+    let streak = calcStreak(checkins)
+    let focusMin = calcTotalFocus(p.focusSessions || [])
+    lines.push('  总打卡天数: ' + streak.total + ' 天')
+    lines.push('  最长连续打卡: ' + streak.max + ' 天')
+    lines.push('  当前连续打卡: ' + streak.current + ' 天')
+    lines.push('  总专注时长: ' + (focusMin / 60).toFixed(1) + ' 小时 (' + (p.focusSessions||[]).length + ' 次)')
+    lines.push('  生成计划数: ' + (p.plansGenerated || 0))
+    lines.push('  保存计划数: ' + (p.plans ? p.plans.length : 0))
+    if (p.target) lines.push('  学习目标: ' + p.target)
+    lines.push('')
+
+    // 打卡记录
+    if (checkins.length > 0) {
+      lines.push('【打卡记录】')
+      checkins.forEach(c => lines.push('  ✅ ' + c))
+      lines.push('')
+    }
+
+    // 学习计划
+    if (p.plans && p.plans.length > 0) {
+      lines.push('【学习计划】')
+      p.plans.forEach((pl, i) => {
+        let st = pl.status === 'done' ? '已完成' : pl.status === 'archived' ? '已归档' : '进行中'
+        lines.push('  ' + sep2)
+        lines.push('  计划 ' + (i+1) + ': ' + (pl.title || '未命名'))
+        lines.push('  状态: ' + st + ' | 创建时间: ' + (pl.createdAt || '未知'))
+        lines.push('  ── 内容 ──')
+        // 内容分行缩进
+        let content = pl.content || ''
+        content.split('\n').forEach(line => {
+          if (line.trim()) lines.push('    ' + line.trim())
+        })
+        lines.push('')
+      })
+    }
+
+    // 对话历史
+    if (p.askHistory) {
+      lines.push('【对话历史】')
+      let asks = p.askHistory.split('；').filter(s => s.trim())
+      asks.forEach((q, i) => lines.push('  Q' + (i+1) + ': ' + q.trim()))
+      lines.push('')
+    }
+
+    // 薄弱点
+    if (p.weakPoints && p.weakPoints.length > 0) {
+      lines.push('【薄弱知识点】')
+      p.weakPoints.forEach(w => lines.push('  ⚠ ' + w))
+      lines.push('')
+    }
+  }
+
+  lines.push(sep)
+  lines.push('  由 AI 学习规划助手 导出')
+  lines.push(sep)
+
+  let text = lines.join('\n')
+  let blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  let a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = 'AI学习报告-' + dateStr(new Date()) + '.txt'
+  a.click()
+  URL.revokeObjectURL(a.href)
+  showToast('导出成功 📤')
+}
+
+function migrateOldData() {
+  let oldUsers = localStorage.getItem('aiPlanUsers')
+  let oldCurrent = localStorage.getItem('aiPlanCurrentUser')
+  let d = getData()
+  let migrated = 0
+  // 迁移用户
+  if (oldUsers) {
+    try {
+      let users = JSON.parse(oldUsers)
+      Object.keys(users).forEach(u => {
+        if (!d.users[u]) {
+          d.users[u] = users[u]
+          migrated++
+        }
+      })
+    } catch(e) {}
+  }
+  // 迁移当前用户
+  if (oldCurrent && !d.currentUser) {
+    d.currentUser = oldCurrent
+  }
+  // 迁移个人数据
+  Object.keys(d.users).forEach(u => {
+    let oldKey = 'profile_' + u
+    let oldData = localStorage.getItem(oldKey)
+    if (oldData) {
+      try {
+        let od = JSON.parse(oldData)
+        if (!d.profiles[u]) d.profiles[u] = createDefaultProfile()
+        if (od['学习目标']) d.profiles[u].target = od['学习目标']
+        if (od['薄弱短板']) d.profiles[u].weakPoints = od['薄弱短板']
+        if (od['失分缺点']) d.profiles[u].losePoints = od['失分缺点']
+        if (od['全部提问']) d.profiles[u].askHistory = od['全部提问']
+        if (od['生成计划']) d.profiles[u].plansGenerated = od['生成计划']
+        migrated++
+      } catch(e) {}
+    }
+  })
+  saveData(d)
+  showToast('迁移完成！迁移了 ' + migrated + ' 条数据 🔄')
+}
+
+function clearAllData() {
+  if (!confirm('确定清空所有数据？此操作不可恢复！')) return
+  localStorage.removeItem(STORAGE_KEY)
+  document.getElementById('loginOverlay').classList.remove('hidden')
+  showToast('已清空')
+}
+
+// ==================== 初始化 ====================
+function initApp() {
+  let d = getData()
+  if (!d.currentUser) {
+    document.getElementById('loginOverlay').classList.remove('hidden')
+    return
+  }
+  document.getElementById('loginOverlay').classList.add('hidden')
+  // 确保用户有profile
+  if (!d.profiles[d.currentUser]) d.profiles[d.currentUser] = createDefaultProfile()
+  saveData(d)
+  renderHome()
+  initFocus()
+  renderProfile()
+}
+
+// Enter发送
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    let input = document.getElementById('chatInput')
+    if (document.activeElement === input) { e.preventDefault(); sendMessage() }
+  }
+})
+
+// 启动
+window.onload = function() {
+  // 自动迁移旧数据
+  if (localStorage.getItem('aiPlanUsers') && !localStorage.getItem(STORAGE_KEY)) {
+    migrateOldData()
+  }
+  initApp()
+}
+</script>
+</body>
+</html>
