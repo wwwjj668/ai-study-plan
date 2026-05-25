@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI学习规划助手 登录</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑","PingFang SC",sans-serif;}
+        body{
+            background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+            height:100vh;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+        }
+        .login-box{
+            width:400px;
+            background:rgba(255,255,255,0.96);
+            padding:40px 35px;
+            border-radius:16px;
+            box-shadow:0 8px 32px rgba(0,0,0,0.2);
+        }
+        h2{
+            text-align:center;
+            color:#5a4b8c;
+            margin-bottom:8px;
+            font-size:24px;
+        }
+        .subtitle{
+            text-align:center;
+            color:#999;
+            font-size:14px;
+            margin-bottom:30px;
+        }
+        .item{margin-bottom:20px;}
+        label{display:block;font-size:14px;color:#666;margin-bottom:6px;font-weight:500;}
+        input{
+            width:100%;
+            padding:12px 16px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            font-size:15px;
+            transition:all 0.3s;
+        }
+        input:focus{
+            border-color:#764ba2;
+            outline:none;
+            box-shadow:0 0 8px rgba(118,75,162,0.2);
+        }
+        .btn{
+            width:100%;
+            padding:13px;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:#fff;
+            border:none;
+            border-radius:8px;
+            font-size:16px;
+            cursor:pointer;
+            transition:all 0.3s;
+            font-weight:500;
+        }
+        .btn:hover{
+            opacity:0.9;
+            transform:translateY(-1px);
+        }
+        .btn-secondary{
+            background:transparent;
+            color:#764ba2;
+            border:1px solid #764ba2;
+            margin-top:10px;
+        }
+        .btn-secondary:hover{
+            background:#f5f0ff;
+            transform:none;
+        }
+        .toggle-link{
+            text-align:center;
+            margin-top:16px;
+            font-size:14px;
+            color:#999;
+        }
+        .toggle-link span{
+            color:#764ba2;
+            cursor:pointer;
+            font-weight:500;
+        }
+        .toggle-link span:hover{text-decoration:underline;}
+        .error-msg{color:#e53935;font-size:13px;text-align:center;margin-top:10px;display:none;}
+        .success-msg{color:#4caf50;font-size:13px;text-align:center;margin-top:10px;display:none;}
+        .tab-bar{
+            display:flex;
+            margin-bottom:28px;
+            border-bottom:2px solid #eee;
+        }
+        .tab-bar div{
+            flex:1;
+            text-align:center;
+            padding:10px 0;
+            font-size:15px;
+            color:#999;
+            cursor:pointer;
+            border-bottom:2px solid transparent;
+            margin-bottom:-2px;
+            transition:all 0.3s;
+        }
+        .tab-bar div.active{
+            color:#764ba2;
+            border-bottom-color:#764ba2;
+            font-weight:600;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>📚 AI学习规划助手</h2>
+        <p class="subtitle">制定专属学习计划，高效备考</p>
+
+        <div class="tab-bar">
+            <div class="active" onclick="switchTab('login')">登录</div>
+            <div onclick="switchTab('register')">注册</div>
+        </div>
+
+        <!-- 登录 -->
+        <div id="loginForm">
+            <div class="item">
+                <label>账号</label>
+                <input type="text" id="username" placeholder="请输入账号" autocomplete="off">
+            </div>
+            <div class="item">
+                <label>密码</label>
+                <input type="password" id="pwd" placeholder="请输入密码" onkeydown="if(event.key==='Enter')login()">
+            </div>
+            <button class="btn" onclick="login()">登 录</button>
+            <div class="error-msg" id="loginError">账号或密码错误</div>
+        </div>
+
+        <!-- 注册 -->
+        <div id="registerForm" style="display:none;">
+            <div class="item">
+                <label>账号</label>
+                <input type="text" id="regUser" placeholder="设置登录账号" autocomplete="off">
+            </div>
+            <div class="item">
+                <label>密码</label>
+                <input type="password" id="regPwd" placeholder="设置登录密码">
+            </div>
+            <div class="item">
+                <label>昵称（选填）</label>
+                <input type="text" id="regNick" placeholder="给自己取个名字吧">
+            </div>
+            <button class="btn" onclick="register()">注 册</button>
+            <div class="success-msg" id="regSuccess">注册成功，请切换到登录</div>
+            <div class="error-msg" id="regError">该账号已被注册</div>
+        </div>
+    </div>
+
+    <script>
+        // 切换登录/注册
+        function switchTab(tab){
+            document.querySelectorAll('.tab-bar div').forEach(el=>el.classList.remove('active'))
+            document.querySelectorAll('.tab-bar div').forEach(el=>{
+                if((tab==='login'&&el.textContent==='登录')||(tab==='register'&&el.textContent==='注册')) el.classList.add('active')
+            })
+            document.getElementById('loginForm').style.display = tab==='login' ? 'block' : 'none'
+            document.getElementById('registerForm').style.display = tab==='register' ? 'block' : 'none'
+            document.getElementById('loginError').style.display = 'none'
+            document.getElementById('regError').style.display = 'none'
+            document.getElementById('regSuccess').style.display = 'none'
+        }
+
+        // 获取所有用户
+        function getUsers(){
+            return JSON.parse(localStorage.getItem('aiPlanUsers') || '{}')
+        }
+        function saveUsers(users){
+            localStorage.setItem('aiPlanUsers', JSON.stringify(users))
+        }
+
+        // 登录
+        function login(){
+            let user = document.getElementById('username').value.trim()
+            let pwd = document.getElementById('pwd').value.trim()
+            let errEl = document.getElementById('loginError')
+            if(!user || !pwd){
+                errEl.textContent = '请输入账号和密码'
+                errEl.style.display = 'block'
+                return
+            }
+            let users = getUsers()
+            if(users[user] && users[user].password === pwd){
+                localStorage.setItem('aiPlanCurrentUser', user)
+                window.location.href = 'index.html'
+            }else{
+                errEl.textContent = '账号或密码错误'
+                errEl.style.display = 'block'
+            }
+        }
+
+        // 注册
+        function register(){
+            let user = document.getElementById('regUser').value.trim()
+            let pwd = document.getElementById('regPwd').value.trim()
+            let nick = document.getElementById('regNick').value.trim() || user
+            let errEl = document.getElementById('regError')
+            let sucEl = document.getElementById('regSuccess')
+            errEl.style.display = 'none'
+            sucEl.style.display = 'none'
+            if(!user || !pwd){
+                errEl.textContent = '账号和密码不能为空'
+                errEl.style.display = 'block'
+                return
+            }
+            if(pwd.length < 4){
+                errEl.textContent = '密码至少4位'
+                errEl.style.display = 'block'
+                return
+            }
+            let users = getUsers()
+            if(users[user]){
+                errEl.textContent = '该账号已被注册'
+                errEl.style.display = 'block'
+                return
+            }
+            users[user] = { password: pwd, nickname: nick, createdAt: new Date().toLocaleDateString() }
+            saveUsers(users)
+            sucEl.style.display = 'block'
+            document.getElementById('regUser').value = ''
+            document.getElementById('regPwd').value = ''
+            document.getElementById('regNick').value = ''
+        }
+
+        // 已登录则直接跳转
+        if(localStorage.getItem('aiPlanCurrentUser')){
+            window.location.href = 'index.html'
+        }
+    </script>
+</body>
+</html>
